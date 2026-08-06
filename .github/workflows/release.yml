@@ -32,7 +32,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          # Node 20+: @vscode/vsce's undici dependency needs the global `File`,
+          # which isn't available on Node 18. (The extension itself still targets
+          # node >=18 at runtime; this is only the build/publish toolchain.)
+          node-version: "20"
           cache: npm
       - run: npm ci # installs the runner's native @lancedb/lancedb-* optional dep
       - run: npm run typecheck
