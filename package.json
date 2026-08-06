@@ -2,7 +2,7 @@
   "name": "knot-ai",
   "displayName": "Knot AI",
   "description": "Zero-config, fully local AI coding assistant for VS Code. Autocomplete, chat, and codebase search powered by Ollama. Nothing ever leaves your machine.",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "publisher": "freshgoldfish",
   "icon": "media/knot.jpg",
   "galleryBanner": {
