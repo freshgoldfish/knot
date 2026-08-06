@@ -114,9 +114,20 @@ export class OllamaService {
     this.baseUrl = opts.baseUrl ?? OLLAMA_DEFAULT_BASE_URL;
   }
 
-  /** True if the ollama binary exists at a known macOS path. */
+  /** True if the ollama binary exists at a known path or on PATH. */
   isInstalled(): boolean {
     return this.findBinary() !== null;
+  }
+
+  /**
+   * Whether Knot can install Ollama automatically on this platform. Only macOS:
+   * the Linux `install.sh` needs `sudo` (which can't run through our headless,
+   * stdio-ignored spawn), and Windows has no `curl | sh` installer. On those
+   * platforms onboarding guides the user to install Ollama themselves
+   * (Phase 9, DECISIONS 018).
+   */
+  canAutoInstall(): boolean {
+    return process.platform === "darwin";
   }
 
   /** True if the Ollama API answers on the configured base URL. */
@@ -135,6 +146,13 @@ export class OllamaService {
 
   /** Install Ollama via the official script (ONBOARDING_FLOW.md Step 3). */
   async install(): Promise<void> {
+    if (!this.canAutoInstall()) {
+      // Defensive: onboarding shows a guided manual-install step instead of
+      // calling this on Linux/Windows. Never run the installer headlessly there.
+      throw new OllamaError(
+        "Automatic Ollama install is not supported on this platform.",
+      );
+    }
     this.logger.info("Installing Ollama via the official install script...");
     await this.runShell(`curl -fsSL ${OLLAMA_INSTALL_SCRIPT_URL} | sh`);
     if (!this.isInstalled()) {
