@@ -39,22 +39,41 @@ planned via platform-specific `--target` builds; see [`PLATFORMS.md`](./PLATFORM
    `.vsix`. If screenshots/logos live only on `dev`, the listing shows broken
    images. So: merge the PR to `main` first, then publish from `main`.
 
-5. **Publish from `main`:**
+5. **Publish.** Two paths depending on how many platforms ship:
+
+   **a. Multi-platform (Phase 9+, preferred): tag-driven CI.** Once assets are on
+   `main`, tag the release and let the `Publish` workflow build and publish every
+   target on its native runner:
+   ```bash
+   git checkout main && git pull origin main
+   git tag vX.Y.Z && git push origin vX.Y.Z
+   ```
+   `.github/workflows/release.yml` publishes `darwin-arm64` (macOS runner) and
+   `linux-x64` (Ubuntu runner) at the version in `package.json`. Requires the
+   `VSCE_PAT` repo secret (Azure DevOps PAT, Marketplace: Manage). See
+   [`PLATFORMS.md`](./PLATFORMS.md).
+
+   **b. Single-target / manual fallback** (e.g. a quick macOS-only fix, or if CI
+   is unavailable): publish from a native machine for that target:
    ```bash
    git checkout main && git pull origin main
    npm run build
-   npx @vscode/vsce publish        # uses the version already in package.json
+   npx @vscode/vsce publish --target darwin-arm64   # from an Apple Silicon Mac
+   # npx @vscode/vsce publish --target linux-x64     # from a Linux x64 box
    ```
+   Publish **all supported targets at the same version** (see the platform note
+   above); a target left behind means those users don't get the new version.
 
-6. **Tag the release** and sync `dev`:
+6. **Tag (if you published manually)** and sync `dev`:
    ```bash
-   git tag vX.Y.Z && git push origin vX.Y.Z
+   git tag vX.Y.Z && git push origin vX.Y.Z   # skip if CI already tagged/ran
    git checkout dev && git merge --ff-only main && git push origin dev
    ```
 
 7. **Smoke-test the live listing** (~5 min after publish): in a clean VS Code,
    Extensions → search "Knot AI" → Install → open a folder → confirm the **Knot**
-   output channel appears (`Knot activating.`) and onboarding runs.
+   output channel appears (`Knot activating.`) and onboarding runs. On a
+   platform-specific release, verify on each supported OS.
 
 ## Verifying the packaged runtime closure (critical)
 
