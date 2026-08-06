@@ -224,6 +224,20 @@ export class OnboardingController {
     // Step 3 — install Ollama. A permission failure gets a manual-install link
     // + "I've installed it" retry (ONBOARDING_FLOW.md Step 3 error state).
     if (!ollama.isInstalled()) {
+      // On platforms where we can't install headlessly (Linux needs sudo), guide
+      // the user to install Ollama themselves rather than auto-running the script
+      // (Phase 9, DECISIONS 018). "I've installed it" re-enters this step.
+      if (!ollama.canAutoInstall()) {
+        this.errorWithLink(
+          3,
+          "Install Ollama to continue",
+          "Knot runs models locally through Ollama. Install it for your system, " +
+            "then come back and click below.",
+          "I've installed it",
+          { label: "Open ollama.com/download", url: OLLAMA_DOWNLOAD_URL },
+        );
+        return;
+      }
       this.info(3, "Installing Ollama…", "This takes about 30 seconds.");
       try {
         await ollama.install();
