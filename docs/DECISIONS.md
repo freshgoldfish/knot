@@ -504,3 +504,35 @@ provider already owns the only sidebar view.
   `onboardingComplete` (implemented in Phase 6 WP2).
 - This decision is recorded now (with the WP1 `ContextService` seam) but its
   UI is built in WP2.
+
+### 018 — Linux is the first post-v1 platform; ship platform-specific VSIXes
+
+**Decision:** Linux (x64, glibc) is the first platform added after v1, delivered
+as platform-specific extension builds (`vsce publish --target darwin-arm64` and
+`--target linux-x64`) under the one `freshgoldfish.knot-ai` listing, rather than
+a single universal `.vsix`. Amends DECISIONS 001.
+
+**Date:** 2026-07-13
+
+**Why:** The core features are already portable (HTTP to Ollama plus VS Code
+APIs), and Linux shares the Unix conventions the code relies on (`/bin/sh`, PATH
+scanning, the `install.sh` installer, `statfs`), making it the cheapest platform
+to add. The blocker is the LanceDB native binary: a universal `.vsix` can carry
+only one platform's binary (today's builds ship only `darwin-arm64`, so a non-Mac
+install fails to activate). Platform-specific targets let the Marketplace serve
+each user the correct binary and mark unsupported platforms as "not available."
+
+**Alternatives considered:**
+- One universal `.vsix` bundling every platform's LanceDB binary. Rejected:
+  ~100MB per platform would bloat the package past 400MB for no benefit.
+- Windows first. Rejected: Windows needs more platform-specific work (no
+  `curl | sh` installer, `.exe` discovery, replacing the `/bin/sh` spawn), so
+  Linux is the lower-risk first step.
+
+**Consequences:**
+- Scope for this pass is linux-x64 + glibc only; Windows, Intel Mac
+  (`darwin-x64`), `linux-arm64`, and musl/Alpine stay out of scope (tracked in
+  PLATFORMS.md).
+- Releases publish all supported targets at the same version (see RELEASING.md),
+  automated by a GitHub Actions matrix.
+- Planned as Phase 9; full file-level plan lives in PLATFORMS.md.

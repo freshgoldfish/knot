@@ -7,7 +7,9 @@ machine to a tier, which determines which model gets downloaded automatically.
 The user never sees this logic — they just see "setting up your model..." and
 it works.
 
-This file is macOS / Apple Silicon only for v1.
+This file is macOS / Apple Silicon only for v1. Linux support is planned post-v1
+(Phase 9): RAM-based tiering via `os.totalmem()`, no chip / Metal detection. See
+[`PLATFORMS.md`](./PLATFORMS.md) and DECISIONS 018.
 
 ---
 

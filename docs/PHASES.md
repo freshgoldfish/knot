@@ -340,6 +340,39 @@ machine via the Marketplace. A versioning + update process is in place.
 
 ---
 
+## Phase 9 — Linux Support (post-v1)
+**Goal:** Extend Knot beyond macOS to **Linux x64 (glibc)** without regressing
+the macOS experience. Amends DECISIONS 001 (macOS-only for v1) per DECISIONS 018.
+Full plan and file-level detail: [`PLATFORMS.md`](./PLATFORMS.md).
+
+### Tasks
+- [ ] Make hardware detection platform-aware: read RAM via `os.totalmem()`
+      (cross-platform), reuse the tier mapping, skip the Apple-Silicon / Metal
+      logic on Linux (`src/services/hardwareDetector.ts`, `src/types.ts`).
+- [ ] Ollama on Linux: add `/usr/bin/ollama` to the binary paths; make install a
+      guided step, since the Linux `install.sh` needs `sudo` and cannot run
+      headless via the current spawn.
+- [ ] Platform-aware onboarding copy (chip / Metal details on macOS only).
+- [ ] Ship platform-specific VSIXes: `vsce publish --target darwin-arm64` and
+      `--target linux-x64`, with the LanceDB `linux-x64-gnu` binary present at
+      package time (via a GitHub Actions matrix).
+- [ ] Update RELEASING.md for multi-target publishing; add a RELEASES.md row when
+      Linux actually ships.
+- [ ] Test end to end on a real Ubuntu x64 machine: install, model pull,
+      extension activation, and all four features.
+- [ ] Update the README / Marketplace listing to include Linux (x64, glibc).
+
+### Scope
+linux-x64 + glibc only. Out of scope: Windows, Intel Mac (`darwin-x64`),
+`linux-arm64`, and musl/Alpine (tracked for later in PLATFORMS.md).
+
+### Definition of Done
+Knot publishes both `darwin-arm64` and `linux-x64` targets at the same version;
+a Linux x64 user installs from the Marketplace and the extension activates and
+works end to end; unsupported platforms correctly show "not available."
+
+---
+
 ## Phase Summary
 
 | Phase | Focus                          |
@@ -353,6 +386,7 @@ machine via the Marketplace. A versioning + update process is in place.
 | 6     | @codebase + onboarding UI      |
 | 7     | Polish + private beta          |
 | 8     | Public Marketplace release     |
+| 9     | Linux support (post-v1)        |
 
 ---
 
