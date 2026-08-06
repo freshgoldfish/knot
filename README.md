@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=freshgoldfish.knot-ai"><img src="https://img.shields.io/visual-studio-marketplace/v/freshgoldfish.knot-ai?label=Marketplace&color=7c6af7" alt="VS Code Marketplace version" /></a>
   <a href="https://marketplace.visualstudio.com/items?itemName=freshgoldfish.knot-ai"><img src="https://img.shields.io/visual-studio-marketplace/i/freshgoldfish.knot-ai?color=7c6af7" alt="Marketplace installs" /></a>
-  <img src="https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-black" alt="Platform: macOS Apple Silicon" />
+  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-black" alt="Platform: macOS and Linux" />
 </p>
 
 Zero-config, fully local AI coding assistant for VS Code: **Tab autocomplete**,
@@ -21,8 +21,8 @@ nothing else to configure.
 
 **Built by Keisha Kaba & Shobhit Sinha.**
 
-> **v1 scope:** macOS on Apple Silicon (M-series) only. Intel Macs, Windows, and
-> Linux are out of scope for this release. See [`docs/`](./docs) for the full spec.
+> **Supported:** macOS on Apple Silicon (M-series) and Linux (x64, glibc). Intel
+> Macs and Windows aren't supported yet. See [`docs/`](./docs) for the full spec.
 
 ---
 
@@ -64,12 +64,13 @@ files cited.
 
 ## Requirements
 
-- **macOS on Apple Silicon.**
+- **macOS (Apple Silicon) or Linux (x64, glibc).**
 - **VS Code 1.85+.**
 - **~5–30 GB free disk**, depending on your hardware tier. Knot picks
   model sizes to match your RAM and downloads them on first run.
-- **[Ollama](https://ollama.com)**: if it isn't installed, Knot installs it
-  for you via the official script on first activation and starts it automatically.
+- **[Ollama](https://ollama.com)**: on macOS, Knot installs it for you on first
+  run; on Linux, Knot links you to the installer. Either way, it starts Ollama
+  automatically once it's present.
 
 You do **not** need to configure anything, sign in, or get an API key. There is no
 cloud account and no telemetry.

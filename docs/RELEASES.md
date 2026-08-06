@@ -6,6 +6,7 @@ Marketplace listing: https://marketplace.visualstudio.com/items?itemName=freshgo
 
 | Version | Date | PR | Summary |
 |---------|------|----|---------|
+| [v0.1.7](#v017) | 2026-08-06 | #28–30 | Linux (x64) support; platform-specific builds |
 | [v0.1.6](#v016) | 2026-07-11 | #25 | Repo moved to the freshgoldfish org; publish updated repository URL |
 | [v0.1.5](#v015) | 2026-07-11 | #22, #23 | Credit Keisha Kaba & Shobhit Sinha as developers in the README |
 | [v0.1.4](#v014) | 2026-07-11 | #18 | Stylistic changes to README + marketplace description |
@@ -14,6 +15,15 @@ Marketplace listing: https://marketplace.visualstudio.com/items?itemName=freshgo
 | [v0.1.1](#v011) | 2026-07-11 | #15 | Initial launch on the VS Code Marketplace |
 
 ---
+
+## v0.1.7
+
+First **Linux (x64, glibc)** release (Phase 9). Hardware detection is now
+platform-aware (Linux uses RAM-based tiering via `os.totalmem()`, no chip/Metal
+probing), onboarding guides Linux users to install Ollama (the Linux installer
+needs sudo, so it isn't run headlessly), and releases now ship platform-specific
+builds (`darwin-arm64` + `linux-x64`) via a CI matrix. macOS is unaffected. See
+`docs/PLATFORMS.md` and DECISIONS 018.
 
 ## v0.1.6
 
