@@ -1,0 +1,45 @@
+name: Publish
+
+# Publishes platform-specific VSIXes to the VS Code Marketplace when a version
+# tag is pushed. Each runner is native to its target so `npm ci` installs the
+# correct LanceDB binary (Phase 9 / DECISIONS 018 / docs/PLATFORMS.md).
+#
+# Prerequisites:
+#   - A `VSCE_PAT` repo secret (Azure DevOps PAT, Marketplace: Manage).
+#   - The version in package.json is bumped (and docs/RELEASES.md updated) on
+#     main before the tag is pushed. `vsce publish` uses that version.
+#
+# Release flow: merge the version-bump PR to main, then:
+#   git tag vX.Y.Z && git push origin vX.Y.Z
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14 # Apple Silicon runner -> darwin-arm64 LanceDB binary
+            target: darwin-arm64
+          - os: ubuntu-latest # x64 runner -> linux-x64-gnu LanceDB binary
+            target: linux-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: npm
+      - run: npm ci # installs the runner's native @lancedb/lancedb-* optional dep
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - name: Publish (${{ matrix.target }})
+        run: npx @vscode/vsce publish --target ${{ matrix.target }}
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
