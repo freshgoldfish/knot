@@ -7,26 +7,38 @@ export type Tier = 1 | 2 | 3 | 4;
 export type ChipGeneration = "M1" | "M2" | "M3" | "M4" | "unknown";
 export type ChipVariant = "base" | "Pro" | "Max" | "Ultra" | "unknown";
 
+/** Platforms Knot supports (DECISIONS 001 + 018). */
+export type SupportedPlatform = "darwin" | "linux";
+
 /** Result of HardwareDetector.detect(). */
 export interface HardwareProfile {
-  /** False for Intel Macs (v1 is Apple Silicon only — DECISIONS 001). */
+  /**
+   * OS family this profile was detected on. `darwin` uses chip/Metal detection;
+   * `linux` uses RAM-based tiering only (Phase 9, DECISIONS 018).
+   */
+  platform: SupportedPlatform;
+  /** False for unsupported hardware (Intel Macs, non-macOS/Linux platforms). */
   supported: boolean;
   /** User-facing reason when `supported` is false. */
   unsupportedReason?: string;
+  /** True only on Apple Silicon Macs; always false on Linux. */
   isAppleSilicon: boolean;
-  /** Raw `machdep.cpu.brand_string`, e.g. "Apple M3 Pro". */
+  /**
+   * Chip label. On macOS, the raw `machdep.cpu.brand_string` (e.g. "Apple M3
+   * Pro"); on Linux, the CPU model from `os.cpus()` (e.g. "AMD Ryzen 7 5800X").
+   */
   chipBrand: string;
   chipGeneration: ChipGeneration;
   chipVariant: ChipVariant;
-  /** Total unified memory in GiB, rounded. */
+  /** Total physical memory in GiB, rounded (unified memory on Apple Silicon). */
   totalMemoryGB: number;
   /** Free disk in GiB on the home volume. */
   availableDiskGB: number;
-  /** macOS product version, e.g. "14.5". */
+  /** macOS product version, e.g. "14.5". Empty on Linux. */
   macosVersion: string;
-  /** Major version number, e.g. 14. */
+  /** Major version number, e.g. 14. Zero on Linux. */
   macosMajor: number;
-  /** Metal GPU acceleration available (macOS 13 Ventura or later). */
+  /** Metal GPU acceleration available (macOS 13+). Always false on Linux. */
   metalSupported: boolean;
   /** Chosen tier after RAM mapping + disk fallback. */
   tier: Tier;

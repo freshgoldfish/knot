@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { statfs } from "node:fs/promises";
-import { homedir } from "node:os";
+import { arch, cpus, homedir, totalmem } from "node:os";
 import { promisify } from "node:util";
 
 import {
@@ -86,6 +86,18 @@ export function parseMacosMajor(version: string): number {
   return Number.isNaN(major) ? 0 : major;
 }
 
+/**
+ * Human-readable chip label for Linux, where there's no `machdep.cpu.brand_string`.
+ * Uses the CPU model from `os.cpus()` when available, else a generic arch label.
+ */
+export function linuxCpuLabel(
+  cpuModel: string | undefined,
+  archName: string,
+): string {
+  const trimmed = cpuModel?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : `Linux (${archName})`;
+}
+
 /** Resolve the chat/autocomplete/embedding models for a tier. */
 export function modelsForTier(tier: Tier): ModelSet {
   return {
@@ -103,26 +115,51 @@ export class HardwareDetector {
   constructor(private readonly logger: Logger) {}
 
   /**
-   * Read hardware via native macOS commands and map to a tier. Never throws:
-   * Intel Macs return an unsupported profile, and any failure defaults to
-   * Tier 2 (HARDWARE_PROFILES.md "Detection fails entirely").
+   * Detect hardware and map to a tier. Dispatches per OS: macOS uses native
+   * chip/Metal detection; Linux uses RAM-based tiering (Phase 9, DECISIONS 018);
+   * anything else is unsupported. Never throws.
    */
   async detect(): Promise<HardwareProfile> {
+    switch (process.platform) {
+      case "darwin":
+        return this.detectMacos();
+      case "linux":
+        return this.detectLinux();
+      default:
+        return this.unsupportedProfile(
+          "linux",
+          "Knot supports macOS (Apple Silicon) and Linux (x64). This platform is not supported.",
+        );
+    }
+  }
+
+  /**
+   * macOS detection via native commands. Never throws: Intel Macs return an
+   * unsupported profile, and any failure defaults to Tier 2
+   * (HARDWARE_PROFILES.md "Detection fails entirely").
+   */
+  private async detectMacos(): Promise<HardwareProfile> {
     try {
-      const [memRaw, chipRaw, osRaw] = await Promise.all([
-        this.sysctl("hw.memsize"),
+      const [chipRaw, osRaw] = await Promise.all([
         this.sysctl("machdep.cpu.brand_string"),
         this.productVersion(),
       ]);
 
       const chipBrand = chipRaw.trim();
-      const totalMemoryGB = Math.round(Number(memRaw.trim()) / BYTES_PER_GB);
+      const totalMemoryGB = Math.round(totalmem() / BYTES_PER_GB);
       const macosVersion = osRaw.trim();
       const macosMajor = parseMacosMajor(macosVersion);
       const metalSupported = macosMajor >= MIN_MACOS_MAJOR_FOR_METAL;
 
       if (!parseIsAppleSilicon(chipBrand)) {
-        return this.unsupportedProfile(chipBrand, totalMemoryGB);
+        return {
+          ...this.unsupportedProfile(
+            "darwin",
+            "Knot v1 supports Apple Silicon only. Intel support is coming.",
+          ),
+          chipBrand,
+          totalMemoryGB,
+        };
       }
 
       const { generation, variant } = parseChip(chipBrand);
@@ -137,6 +174,7 @@ export class HardwareDetector {
       }
 
       return {
+        platform: "darwin",
         supported: true,
         isAppleSilicon: true,
         chipBrand,
@@ -154,6 +192,41 @@ export class HardwareDetector {
       this.logger.error("Hardware detection failed; defaulting to Tier 2", err);
       return this.defaultProfile();
     }
+  }
+
+  /**
+   * Linux detection (Phase 9). No chip/Metal probing — GPU acceleration is
+   * Ollama's concern. Tier comes from total RAM (`os.totalmem()`) plus the same
+   * disk fallback as macOS.
+   */
+  private async detectLinux(): Promise<HardwareProfile> {
+    const totalMemoryGB = Math.round(totalmem() / BYTES_PER_GB);
+    const chipBrand = linuxCpuLabel(cpus()[0]?.model, arch());
+    const availableDiskGB = await this.availableDiskGB();
+    const ramTier = mapMemoryToTier(totalMemoryGB);
+    const tier = applyDiskFallback(ramTier, availableDiskGB);
+
+    if (tier !== ramTier) {
+      this.logger.warn(
+        `Only ${availableDiskGB}GB free disk; falling back from Tier ${ramTier} to Tier ${tier}.`,
+      );
+    }
+
+    return {
+      platform: "linux",
+      supported: true,
+      isAppleSilicon: false,
+      chipBrand,
+      chipGeneration: "unknown",
+      chipVariant: "unknown",
+      totalMemoryGB,
+      availableDiskGB,
+      macosVersion: "",
+      macosMajor: 0,
+      metalSupported: false,
+      tier,
+      detectionFailed: false,
+    };
   }
 
   private async sysctl(key: string): Promise<string> {
@@ -180,18 +253,18 @@ export class HardwareDetector {
   }
 
   private unsupportedProfile(
-    chipBrand: string,
-    totalMemoryGB: number,
+    platform: HardwareProfile["platform"],
+    unsupportedReason: string,
   ): HardwareProfile {
     return {
+      platform,
       supported: false,
-      unsupportedReason:
-        "Knot v1 supports Apple Silicon only. Intel support is coming.",
+      unsupportedReason,
       isAppleSilicon: false,
-      chipBrand,
+      chipBrand: "unknown",
       chipGeneration: "unknown",
       chipVariant: "unknown",
-      totalMemoryGB,
+      totalMemoryGB: 0,
       availableDiskGB: 0,
       macosVersion: "",
       macosMajor: 0,
@@ -203,6 +276,7 @@ export class HardwareDetector {
 
   private defaultProfile(): HardwareProfile {
     return {
+      platform: "darwin",
       supported: true,
       isAppleSilicon: true,
       chipBrand: "unknown",
