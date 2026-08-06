@@ -228,15 +228,19 @@ async function runSmokeTest(
       return;
     }
 
+    const osLabel =
+      hw.platform === "darwin"
+        ? `macOS ${hw.macosVersion || "unknown"}`
+        : "Linux";
     logger.info(
-      `Detected: ${hw.chipBrand} — ${hw.totalMemoryGB}GB unified memory, ` +
-        `${hw.availableDiskGB}GB free disk, macOS ${hw.macosVersion || "unknown"}. ` +
+      `Detected: ${hw.chipBrand} — ${hw.totalMemoryGB}GB memory, ` +
+        `${hw.availableDiskGB}GB free disk, ${osLabel}. ` +
         `Tier ${hw.tier}.`,
     );
     if (hw.detectionFailed) {
       logger.warn("Hardware detection partially failed; defaulted to Tier 2.");
     }
-    if (!hw.metalSupported) {
+    if (hw.platform === "darwin" && !hw.metalSupported) {
       logger.warn(
         "macOS is below Ventura (13). Metal acceleration is unavailable; " +
           "models will run on CPU and be slower.",

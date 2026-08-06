@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   applyDiskFallback,
+  linuxCpuLabel,
   mapMemoryToTier,
   modelsForTier,
   parseChip,
@@ -97,6 +98,23 @@ describe("parseMacosMajor", () => {
 
   it("returns 0 for an unparseable version", () => {
     expect(parseMacosMajor("not-a-version")).toBe(0);
+  });
+});
+
+describe("linuxCpuLabel", () => {
+  it("uses the CPU model when present", () => {
+    expect(linuxCpuLabel("AMD Ryzen 7 5800X 8-Core Processor", "x64")).toBe(
+      "AMD Ryzen 7 5800X 8-Core Processor",
+    );
+    expect(linuxCpuLabel("  Intel(R) Core(TM) i7-9750H  ", "x64")).toBe(
+      "Intel(R) Core(TM) i7-9750H",
+    );
+  });
+
+  it("falls back to an arch label when the model is missing or blank", () => {
+    expect(linuxCpuLabel(undefined, "x64")).toBe("Linux (x64)");
+    expect(linuxCpuLabel("", "arm64")).toBe("Linux (arm64)");
+    expect(linuxCpuLabel("   ", "x64")).toBe("Linux (x64)");
   });
 });
 

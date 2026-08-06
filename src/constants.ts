@@ -11,10 +11,13 @@ import type { Tier } from "./types";
 // so a post-v1 observability proxy can sit in front (DECISIONS 011).
 export const OLLAMA_DEFAULT_BASE_URL = "http://127.0.0.1:11434";
 
-// Known macOS install locations. Homebrew (Apple Silicon) first.
+// Known install locations. macOS Homebrew (Apple Silicon) first, then the
+// paths the Linux install.sh uses. Anything else is found via the PATH scan in
+// OllamaService.findBinary().
 export const OLLAMA_BINARY_PATHS = [
-  "/opt/homebrew/bin/ollama",
-  "/usr/local/bin/ollama",
+  "/opt/homebrew/bin/ollama", // macOS, Apple Silicon Homebrew
+  "/usr/local/bin/ollama", // macOS Intel Homebrew + Linux install.sh
+  "/usr/bin/ollama", // Linux (distro packages)
 ];
 
 // Official install script (ONBOARDING_FLOW.md Step 3). Downloading Ollama is a
