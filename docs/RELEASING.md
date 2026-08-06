@@ -1,7 +1,9 @@
 # Releasing Knot
 
 How to publish an update of **Knot** (`freshgoldfish.knot-ai`) to the VS Code
-Marketplace. v1 is macOS / Apple Silicon only.
+Marketplace. v1 is macOS / Apple Silicon only. Linux (and eventually Windows) is
+planned via platform-specific `--target` builds; see [`PLATFORMS.md`](./PLATFORMS.md)
+(Phase 9) for the multi-target publishing plan.
 
 ## One-time setup
 

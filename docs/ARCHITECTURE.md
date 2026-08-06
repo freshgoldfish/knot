@@ -10,7 +10,9 @@ user's machine and is called via its REST API on localhost.
 ## Platform
 
 v1 targets macOS only. This simplifies hardware detection, installation 
-scripting, and testing significantly. Windows and Linux are post-v1.
+scripting, and testing significantly. Windows and Linux are post-v1. Linux is the
+first post-v1 target (Phase 9); see [`PLATFORMS.md`](./PLATFORMS.md) and
+DECISIONS 018.
 
 ## High-Level Component Map
 
