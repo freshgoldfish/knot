@@ -373,6 +373,36 @@ works end to end; unsupported platforms correctly show "not available."
 
 ---
 
+## Phase 10 — User Model Selection (post-v1)
+**Goal:** Let the user override the auto-detected model from a **dropdown in the
+chat header, next to New Chat**, choosing from the curated `qwen2.5-coder` sizes.
+Detection still picks the default; this is an override. Full plan and file-level
+detail: [`MODEL_PICKER.md`](./MODEL_PICKER.md).
+
+### Tasks
+- [ ] Upgrade the header `model-name` span into a preset-size dropdown
+      (`src/chatViewProvider.ts` header, `media/webview.css`, `src/webview/main.ts`).
+- [ ] Protocol: add a `setModel` message + extend `init` to carry the preset list
+      and current selection; validate it in `src/webviewProtocol.ts`.
+- [ ] On select: persist `chatModel` + `autocompleteModel`, then pull the models
+      if not installed. Chat + completions read the model from config live.
+- [ ] Download UX: progress surface for a multi-minute pull, disk-space + failure
+      handling, block sending until ready, guard concurrent switches.
+- [ ] Persist the choice; decide manual-override vs. detected `tier` semantics.
+
+### Scope / open decisions
+Preset sizes only. Recommendation: change **chat + autocomplete only** (embeddings
+are `nomic-embed-text` at every tier, so presets never change embeddings or
+trigger a re-index). See MODEL_PICKER.md for the open decisions (embeddings,
+progress surface, labels).
+
+### Definition of Done
+A user can switch the model from the chat header; the new model downloads with
+visible progress (and clear failure handling) and takes effect for chat and
+autocomplete without a reload.
+
+---
+
 ## Phase Summary
 
 | Phase | Focus                          |
@@ -387,6 +417,7 @@ works end to end; unsupported platforms correctly show "not available."
 | 7     | Polish + private beta          |
 | 8     | Public Marketplace release     |
 | 9     | Linux support (post-v1)        |
+| 10    | User model selection (post-v1) |
 
 ---
 
